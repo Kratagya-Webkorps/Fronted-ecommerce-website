@@ -1,9 +1,11 @@
 import React, { useState, useCallback, ChangeEvent, FormEvent } from "react";
 import image01 from "../../../images/image01.png";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
 import { useDispatch } from "react-redux";
 import { SUBMIT_FORM } from "../../../redux/interfaces/interfaces";
+import InputField from "../../utils/InputField";
+import Button from "../../utils/Button";
+import usePost from "../../../hooks/usePost";
 
 interface FormData {
   name: string;
@@ -12,35 +14,9 @@ interface FormData {
   password: string;
 }
 
-interface InputFieldProps {
-  type: string;
-  placeholder: string;
-  name: string;
-  value: string;
-  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
-  required?: boolean;
-}
-
-const InputField: React.FC<InputFieldProps> = ({
-  type,
-  placeholder,
-  name,
-  value,
-  onChange,
-  required = false,
-}) => (
-  <input
-    type={type}
-    placeholder={placeholder}
-    name={name}
-    value={value}
-    onChange={onChange}
-    className="w-full p-2 mb-4 border border-gray-300 rounded"
-    required={required}
-  />
-);
-
 const SignUpForm: React.FC = () => {
+  const SERVER_PORT = process.env.REACT_APP_SERVER_PORT;
+
   const [formData, setFormData] = useState<FormData>({
     name: "",
     userName: "",
@@ -50,62 +26,58 @@ const SignUpForm: React.FC = () => {
   const [error, setError] = useState<string>("");
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { makeRequest, data,isLoading, error: requestError } = usePost(
+    `${SERVER_PORT}/signup`
+  );
 
   const handleChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       const { name, value } = e.target;
       setFormData((prevData) => ({ ...prevData, [name]: value }));
     },
-    [setFormData]
+    []
   );
 
-  const handleSubmit = useCallback(
-    async (e: FormEvent) => {
-      const SERVER_PORT = process.env.REACT_APP_SERVER_PORT;
-
-      e.preventDefault();
-      if (!validatePassword(formData.password)) {
-        setError(
-          "Password must be at least 8 characters long and include at least one letter, and one number."
-        );
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!validatePassword(formData.password)) {
+      setError(
+        "Password must be at least 8 characters long and include at least one letter and one number."
+      );
+      return;
+    }
+    setError("");
+    try {
+      await makeRequest({
+        email: formData.email,
+        name: formData.name,
+        password: formData.password,
+        username: formData.userName,
+      });
+      if(data)console.log({data});
+      if (requestError) {
+        setError(requestError);
         return;
       }
-      setError("");
-      try {
-        const response = await axios.post(`${SERVER_PORT}/signup`, {
-          email: formData.email,
-          name: formData.name,
-          password: formData.password,
-          username: formData.userName,
-        });
-        console.log(response);
-        dispatch({
-          type: SUBMIT_FORM,
-          payload: {
-            email: formData.email,
-            name: formData.name,
-            password: formData.password,
-            username: formData.userName,
-          },
-        });
-        navigate("/login")
-      } catch (error) {
-        console.log(error);
-      }
-
-      console.log("Form submitted:", formData);
-    },
-    [formData ,navigate, dispatch]
-  );
+      dispatch({
+        type: SUBMIT_FORM,
+        payload: formData,
+      });
+      navigate("/login");
+    } catch (err) {
+      console.log(err);
+      setError("An error occurred. Please try again.");
+    }
+  };
 
   const validatePassword = (password: string) => {
-    const regex = /^[a-zA-Z0-9@$!%*#?&]{3,30}$/;
+    const regex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
     return regex.test(password);
   };
 
   return (
     <div className="flex flex-col gap-3 sm:flex-row h-min">
-      <div className="sm:w-1/2 hidden md:block justify-center items-center ">
+      <div className="sm:w-1/2 hidden md:block justify-center items-center">
         <img
           src={image01}
           alt="Shopping Cart and Smartphone"
@@ -151,16 +123,17 @@ const SignUpForm: React.FC = () => {
             onChange={handleChange}
             required
           />
-          {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-          <button
-            type="submit"
-            className="w-full bg-red-600 text-white p-2 rounded mb-4"
-          >
-            Create Account
-          </button>
+          {(error || requestError) && (
+            <p className="text-red-500 text-sm mb-4">
+              {error || requestError}
+            </p>
+          )}
+          <Button type="submit" >
+            {isLoading ? "Creating Account..." : "Create Account"}
+          </Button>
           <p className="mt-4 text-gray-600">
             Already have an account?{" "}
-            <Link className="text-red-600" to={"/login"}>
+            <Link className="text-red-600" to="/login">
               Login
             </Link>
           </p>

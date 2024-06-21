@@ -3,6 +3,7 @@ import LoginForm from "./components/_auth/forms/LoginForm";
 import SignupForm from "./components/_auth/forms/SignupForm";
 import Navbar from "./components/layout/Navbar";
 import AddProduct from "./components/_root/pages/admin/AddProducts";
+import ProductList from "./components/_root/pages/productFields/ProductList";
 
 function App() {
   return (
@@ -26,7 +27,7 @@ function App() {
 const Home = () => {
   return (
     <div>
-      <h1>Welcome to Home</h1>
+      <ProductList />
     </div>
   );
 };

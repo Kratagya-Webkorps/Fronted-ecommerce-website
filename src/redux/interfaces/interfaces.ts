@@ -30,12 +30,21 @@ export interface AppState {
 export interface ProductFormData {
   name: string;
   description: string;
-  productImage: string;
+  productImage: File | null;
   price: string;
   stock: string;
   category: string;
   owner: string;
 }
 
+export interface ProductCardProps {
+  image: string;
+  name:string;
+  price: number;
+  rating: number;
+  className:string
+}
+
 export const SUBMIT_FORM = "SUBMIT_FORM";
 export const LOGIN_SUCCESS = "LOGIN_SUCCESS";
+export const LOGOUT_SUCCESS = "LOGOUT_SUCCESS";

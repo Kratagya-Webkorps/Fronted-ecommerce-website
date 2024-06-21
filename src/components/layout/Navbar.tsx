@@ -1,17 +1,32 @@
-import React, { useState } from "react";
+import React, {  useState } from "react";
 import { FiHeart, FiShoppingCart, FiSearch, FiMenu, FiX } from "react-icons/fi";
-import { useSelector } from "react-redux";
-import { Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { Link, useNavigate } from "react-router-dom";
+import { LOGOUT_SUCCESS } from "../../redux/interfaces/interfaces";
+import Cookies from "js-cookie";
 
 const Navbar: React.FC = () => {
   const loginDetails = useSelector((state: any) => state.loginForm);
+  const isLoggedIn = loginDetails.isLoggedIn;
   const userRole = loginDetails.role;
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const [isOpen, setIsOpen] = useState(false);
 
   const closeMenu = () => {
     setIsOpen(false);
   };
+
+  const logout = ()=>{
+    Cookies.remove('token')
+    navigate("/")
+
+    dispatch({
+      type:LOGOUT_SUCCESS
+    })
+
+  }
 
   return (
     <nav className="bg-white fixed w-full z-20 top-0 start-0 border-b border-gray-200 dark:border-gray-600">
@@ -57,7 +72,7 @@ const Navbar: React.FC = () => {
                 to={"/"}
                 className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-dark md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-dark md:dark:hover:bg-transparent dark:border-gray-700"
                 aria-current="page"
-                onClick={closeMenu} // Close menu on link click
+                onClick={closeMenu}
               >
                 Home
               </Link>
@@ -66,7 +81,7 @@ const Navbar: React.FC = () => {
               <Link
                 to={"/contact"}
                 className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-dark md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-dark md:dark:hover:bg-transparent dark:border-gray-700"
-                onClick={closeMenu} // Close menu on link click
+                onClick={closeMenu}
               >
                 Contact
               </Link>
@@ -75,29 +90,53 @@ const Navbar: React.FC = () => {
               <Link
                 to={"/about"}
                 className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-dark md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-dark md:dark:hover:bg-transparent dark:border-gray-700"
-                onClick={closeMenu} // Close menu on link click
+                onClick={closeMenu}
               >
                 About
               </Link>
             </li>
-            <li>
-              <Link
-                className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-dark md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-dark md:dark:hover:bg-transparent dark:border-gray-700"
-                to={"/signup"}
-                onClick={closeMenu} // Close menu on link click
-              >
-                Signup
-              </Link>
-            </li>
-            {userRole === "admin" && (
+            {!isLoggedIn && (
+              <li>
+                <Link
+                  className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-dark md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-dark md:dark:hover:bg-transparent dark:border-gray-700"
+                  to={"/signup"}
+                  onClick={closeMenu}
+                >
+                  Signup
+                </Link>
+              </li>
+            )}
+            {isLoggedIn && (
+              <li>
+                <Link
+                  className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-dark md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-dark md:dark:hover:bg-transparent dark:border-gray-700"
+                  to={"/profile"}
+                  onClick={closeMenu}
+                >
+                  {userRole === "admin" ? "Admin" : "User"}
+                </Link>
+              </li>
+            )}
+            {isLoggedIn && userRole === "admin" && (
               <li>
                 <Link
                   className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-dark md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-dark md:dark:hover:bg-transparent dark:border-gray-700"
                   to={"/addproducts"}
-                  onClick={closeMenu} // Close menu on link click
+                  onClick={closeMenu}
                 >
-                  AddProducts
+                  Add Products
                 </Link>
+              </li>
+            )}
+            {isLoggedIn && (
+              <li>
+                <p
+                  className="block cursor-pointer py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-dark md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-dark md:dark:hover:bg-transparent dark:border-gray-700"
+                  
+                  onClick={logout}
+                >
+                  Logout
+                </p>
               </li>
             )}
           </ul>

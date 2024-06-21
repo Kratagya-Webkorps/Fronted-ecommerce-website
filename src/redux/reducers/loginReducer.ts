@@ -1,5 +1,5 @@
 import { Reducer } from "@reduxjs/toolkit";
-import { LOGIN_SUCCESS, LoginFormState } from "../interfaces/interfaces";
+import { LOGIN_SUCCESS, LOGOUT_SUCCESS, LoginFormState } from "../interfaces/interfaces";
 const initialstate: LoginFormState = {
   username: "",
   role:"",
@@ -19,6 +19,14 @@ const loginFormReducer: Reducer<LoginFormState> = (
         email: action.payload.email,
         isLoggedIn: action.payload.isLoggedIn,
       };
+    case LOGOUT_SUCCESS:
+      return {
+        username:"",
+        role:"",
+        email:"",
+        isLoggedIn:"",
+      };
+
 
     default:
       return state;

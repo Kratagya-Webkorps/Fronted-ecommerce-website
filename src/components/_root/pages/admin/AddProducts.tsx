@@ -1,20 +1,27 @@
 import React, { useState, ChangeEvent, FormEvent } from "react";
+import axios from "axios";
+import Cookies from "js-cookie";
 import { ProductFormData } from "../../../../redux/interfaces/interfaces";
-// import axios from "axios";
-// import { useNavigate } from "react-router-dom";
+
+const ADMIN_PORT = process.env.REACT_APP_ADMIN_PORT;
 
 const AddProducts: React.FC = () => {
-  const [formData, setFormData] = useState<ProductFormData>({
+
+
+  const initialFormData: ProductFormData = {
     name: "",
     description: "",
-    productImage: "",
+    productImage: null,
     price: "",
     stock: "",
     category: "",
     owner: "",
-  });
+  };
 
-  const [products, setProducts] = useState<ProductFormData[]>([]);
+  const [formData, setFormData] = useState<ProductFormData>(initialFormData);
+  const [errors, setErrors] = useState<Partial<ProductFormData>>({});
+  const [imageError, setImageError] = useState<string>("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -23,166 +30,187 @@ const AddProducts: React.FC = () => {
     setFormData((prevData) => ({ ...prevData, [name]: value }));
   };
 
-  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-
-      reader.onloadend = () => {
-        setFormData((prevData) => ({
-          ...prevData,
-          productImage: reader.result as string,
-        }));
-      };
-
-      reader.readAsDataURL(file);
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const validImageTypes = ["image/jpeg", "image/png", "image/gif"];
+      if (!validImageTypes.includes(file.type)) {
+        setImageError("Please upload a valid image file (JPEG, PNG, GIF)");
+        setFormData((prevData) => ({ ...prevData, productImage: null }));
+      } else {
+        setImageError("");
+        setFormData((prevData) => ({ ...prevData, productImage: file }));
+      }
     }
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: Partial<ProductFormData> = {};
+
+    if (!formData.name) newErrors.name = "Name is required";
+    if (!formData.description)
+      newErrors.description = "Description is required";
+    if (!formData.price) newErrors.price = "Price is required";
+    if (!formData.stock) newErrors.stock = "Stock is required";
+    if (!formData.category) newErrors.category = "Category is required";
+    if (!formData.owner) newErrors.owner = "Owner is required";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    const { name, description, productImage, price, stock, category, owner } =
-      formData;
+    if (!validateForm()) return;
 
-    const newProduct = {
-      name,
-      description,
-      productImage,
-      price,
-      stock,
-      category,
-      owner,
-    };
+    setLoading(true); // Set loading state to true
 
-    setProducts((prevProducts) => [...prevProducts, newProduct]);
-    setFormData({
-      name: "",
-      description: "",
-      productImage: "",
-      price: "",
-      stock: "",
-      category: "",
-      owner: "",
+    const formDataToSend = new FormData();
+    Object.entries(formData).forEach(([key, value]) => {
+      if (value !== null) {
+        formDataToSend.append(key, value as Blob | string);
+      }
     });
-    console.log(products);
+
+    try {
+      const token = Cookies.get("token");
+      const response = await axios.post(
+        `${ADMIN_PORT}/create`,
+        formDataToSend,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      console.log(response.data);
+      setFormData(initialFormData); // Reset form after successful submission
+    } catch (error) {
+      console.error("Error adding product:", error);
+    } finally {
+      setLoading(false); // Set loading state to false after submission
+    }
   };
 
-
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Add New Product</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Name
-          </label>
-          <input
-            type="text"
-            name="name"
-            className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-            value={formData.name}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Description
-          </label>
-          <textarea
-            name="description"
-            className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-            value={formData.description}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Product Image
-          </label>
-          <input
-            type="file"
-            name="productImage"
-            className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-            onChange={handleImageChange}
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Price
-          </label>
-          <input
-            type="number"
-            name="price"
-            className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-            value={formData.price}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Stock
-          </label>
-          <input
-            type="number"
-            name="stock"
-            className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-            value={formData.stock}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Category
-          </label>
-          <input
-            type="text"
-            name="category"
-            className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-            value={formData.category}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Owner
-          </label>
-          <input
-            type="text"
-            name="owner"
-            className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-            value={formData.owner}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white p-2 rounded-md"
-        >
-          Add Product
-        </button>
-      </form>
-
-      {/* Display added products */}
-      <div className=" mt-4">
-        <h2 className="text-xl font-semibold mb-2">Added Products</h2>
-        {products.map((product, index) => (
-          <div key={index} className="border flex p-4 mb-4 rounded-md">
-            <p>Name: {product.name}</p>
-            <p>Description: {product.description}</p>
-            <p>Price: {product.price}</p>
-            <p>Stock: {product.stock}</p>
-            <p>Category: {product.category}</p>
-            <p>Owner: {product.owner}</p>
-            <img src={product.productImage} height={100} width={100} alt="mew"/>
+    <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
+      <div className="w-full max-w-2xl bg-white rounded-lg shadow-md p-6">
+        <h1 className="text-2xl font-bold mb-6 text-center">Add New Product</h1>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Name
+            </label>
+            <input
+              type="text"
+              name="name"
+              className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+              value={formData.name}
+              onChange={handleChange}
+            />
+            {errors.name && (
+              <p className="text-red-500 text-sm">{errors.name}</p>
+            )}
           </div>
-        ))}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Description
+            </label>
+            <textarea
+              name="description"
+              className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+              value={formData.description}
+              onChange={handleChange}
+            />
+            {errors.description && (
+              <p className="text-red-500 text-sm">{errors.description}</p>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Product Image
+            </label>
+            <input
+              type="file"
+              name="productImage"
+              className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+              onChange={handleFileChange}
+              accept="image/*"
+            />
+            {imageError && <p className="text-red-500 text-sm">{imageError}</p>}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Price
+            </label>
+            <input
+              type="number"
+              name="price"
+              className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+              value={formData.price}
+              onChange={handleChange}
+            />
+            {errors.price && (
+              <p className="text-red-500 text-sm">{errors.price}</p>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Stock
+            </label>
+            <input
+              type="number"
+              name="stock"
+              className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+              value={formData.stock}
+              onChange={handleChange}
+            />
+            {errors.stock && (
+              <p className="text-red-500 text-sm">{errors.stock}</p>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Category
+            </label>
+            <input
+              type="text"
+              name="category"
+              className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+              value={formData.category}
+              onChange={handleChange}
+            />
+            {errors.category && (
+              <p className="text-red-500 text-sm">{errors.category}</p>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Owner
+            </label>
+            <input
+              type="text"
+              name="owner"
+              className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+              value={formData.owner}
+              onChange={handleChange}
+            />
+            {errors.owner && (
+              <p className="text-red-500 text-sm">{errors.owner}</p>
+            )}
+          </div>
+          <button
+            type="submit"
+            className={`w-full bg-blue-600 text-white p-2 rounded-md ${
+              loading ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+            disabled={loading}
+          >
+            {loading ? "Adding..." : "Add Product"}
+          </button>
+        </form>
       </div>
     </div>
   );
