@@ -1,13 +1,12 @@
 import React, { useState, ChangeEvent, FormEvent } from "react";
 import axios from "axios";
 import Cookies from "js-cookie";
+import InputField from "../../../utils/InputField";
 import { ProductFormData } from "../../../../redux/interfaces/interfaces";
 
 const ADMIN_PORT = process.env.REACT_APP_ADMIN_PORT;
 
 const AddProducts: React.FC = () => {
-
-
   const initialFormData: ProductFormData = {
     name: "",
     description: "",
@@ -24,7 +23,7 @@ const AddProducts: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({ ...prevData, [name]: value }));
@@ -63,7 +62,7 @@ const AddProducts: React.FC = () => {
     e.preventDefault();
     if (!validateForm()) return;
 
-    setLoading(true); // Set loading state to true
+    setLoading(true);
 
     const formDataToSend = new FormData();
     Object.entries(formData).forEach(([key, value]) => {
@@ -71,49 +70,41 @@ const AddProducts: React.FC = () => {
         formDataToSend.append(key, value as Blob | string);
       }
     });
-
     try {
       const token = Cookies.get("token");
-      const response = await axios.post(
-        `${ADMIN_PORT}/create`,
-        formDataToSend,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      console.log({formDataToSend});
+
+      const response = await axios.post(`${ADMIN_PORT}/create`, formDataToSend, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
       console.log(response.data);
-      setFormData(initialFormData); // Reset form after successful submission
+      setFormData(initialFormData);
     } catch (error) {
       console.error("Error adding product:", error);
     } finally {
-      setLoading(false); // Set loading state to false after submission
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
+    <div className="flex flex-grow items-center justify-center h-min md:mt-24 bg-gray-100 p-4">
       <div className="w-full max-w-2xl bg-white rounded-lg shadow-md p-6">
         <h1 className="text-2xl font-bold mb-6 text-center">Add New Product</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Name
-            </label>
-            <input
-              type="text"
-              name="name"
-              className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-              value={formData.name}
-              onChange={handleChange}
-            />
-            {errors.name && (
-              <p className="text-red-500 text-sm">{errors.name}</p>
-            )}
-          </div>
+          <InputField
+            type="text"
+            name="name"
+            placeholder="Name"
+            value={formData.name}
+            onChange={handleChange}
+            required
+          />
+          {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
+
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Description
@@ -128,6 +119,7 @@ const AddProducts: React.FC = () => {
               <p className="text-red-500 text-sm">{errors.description}</p>
             )}
           </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Product Image
@@ -141,66 +133,64 @@ const AddProducts: React.FC = () => {
             />
             {imageError && <p className="text-red-500 text-sm">{imageError}</p>}
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Price
-            </label>
-            <input
-              type="number"
-              name="price"
-              className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-              value={formData.price}
-              onChange={handleChange}
-            />
-            {errors.price && (
-              <p className="text-red-500 text-sm">{errors.price}</p>
-            )}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Stock
-            </label>
-            <input
-              type="number"
-              name="stock"
-              className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-              value={formData.stock}
-              onChange={handleChange}
-            />
-            {errors.stock && (
-              <p className="text-red-500 text-sm">{errors.stock}</p>
-            )}
-          </div>
+
+          <InputField
+            type="number"
+            name="price"
+            placeholder="Price"
+            value={formData.price}
+            onChange={handleChange}
+            required
+          />
+          {errors.price && (
+            <p className="text-red-500 text-sm">{errors.price}</p>
+          )}
+
+          <InputField
+            type="number"
+            name="stock"
+            placeholder="Stock"
+            value={formData.stock}
+            onChange={handleChange}
+            required
+          />
+          {errors.stock && (
+            <p className="text-red-500 text-sm">{errors.stock}</p>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Category
             </label>
-            <input
-              type="text"
+            <select
               name="category"
               className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
               value={formData.category}
               onChange={handleChange}
-            />
+            >
+              <option value="">Select a category</option>
+              <option value="phone">Phone</option>
+              <option value="laptop">Laptop</option>
+              <option value="tv">TV</option>
+              <option value="accessories">Accessories</option>
+            </select>
             {errors.category && (
               <p className="text-red-500 text-sm">{errors.category}</p>
             )}
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Owner
-            </label>
-            <input
-              type="text"
-              name="owner"
-              className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-              value={formData.owner}
-              onChange={handleChange}
-            />
-            {errors.owner && (
-              <p className="text-red-500 text-sm">{errors.owner}</p>
-            )}
-          </div>
+
+          <InputField
+            type="text"
+            name="owner"
+            placeholder="Owner"
+            value={formData.owner}
+            onChange={handleChange}
+            required
+          />
+          {errors.owner && (
+            <p className="text-red-500 text-sm">{errors.owner}</p>
+          )}
+
           <button
             type="submit"
             className={`w-full bg-blue-600 text-white p-2 rounded-md ${

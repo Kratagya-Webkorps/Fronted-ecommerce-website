@@ -6,6 +6,7 @@ interface InputFieldProps {
   value: string;
   onChange: (e: ChangeEvent<HTMLInputElement>) => void;
   required?: boolean;
+  disabled?:boolean
 }
 
 const InputField: React.FC<InputFieldProps> = ({
@@ -15,6 +16,7 @@ const InputField: React.FC<InputFieldProps> = ({
   name,
   onChange,
   required = false,
+  disabled = false
 }) => (
   <input
     type={type}
@@ -24,6 +26,7 @@ const InputField: React.FC<InputFieldProps> = ({
     onChange={onChange}
     className="w-full p-2 mb-4 border border-gray-300 rounded"
     required={required}
+    disabled={disabled}
   />
 );
 

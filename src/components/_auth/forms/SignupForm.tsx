@@ -76,7 +76,7 @@ const SignUpForm: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-3 sm:flex-row h-min">
+    <div className="flex flex-col gap-3 sm:flex-row h-min mt-52  xl:mt-0 ">
       <div className="sm:w-1/2 hidden md:block justify-center items-center">
         <img
           src={image01}
@@ -84,9 +84,9 @@ const SignUpForm: React.FC = () => {
           className="max-h-full max-w-full"
         />
       </div>
-      <div className="flex w-full sm:w-1/2 items-center justify-center bg-gray-100">
+      <div className="flex w-full md:w-1/2 items-center justify-center bg-gray-100">
         <form
-          className="bg-white p-6 rounded-lg shadow-md w-full max-w-sm"
+          className="bg-white p-6 rounded-lg w-full max-w-md"
           onSubmit={handleSubmit}
         >
           <h1 className="text-2xl font-bold mb-4">Create an account</h1>
