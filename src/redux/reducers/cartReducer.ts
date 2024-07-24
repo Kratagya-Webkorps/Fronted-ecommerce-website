@@ -2,6 +2,7 @@ import { Reducer } from "@reduxjs/toolkit";
 import {
   ADD_TO_CART,
   SAVE_TO_CART,
+  REMOVE_FROM_CART,
   CartState,
   UPDATE_CART_ITEM_COUNT,
 } from "../interfaces/interfaces";
@@ -73,7 +74,6 @@ const cartReducer: Reducer<CartState> = (state = initialState, action: any) => {
       );
 
       if (existingUserIndexAdd !== -1) {
-        // User already exists in cartItems, update products array
         const updatedUserProductsAdd = [
           ...state.cartItems[existingUserIndexAdd].products,
         ];
@@ -82,10 +82,8 @@ const cartReducer: Reducer<CartState> = (state = initialState, action: any) => {
         );
 
         if (existingProductIndexAdd !== -1) {
-          // Update quantity for existing product
           updatedUserProductsAdd[existingProductIndexAdd].quantity += quantity;
         } else {
-          // Product doesn't exist, add it
           updatedUserProductsAdd.push({ productId, quantity });
         }
 
@@ -114,6 +112,33 @@ const cartReducer: Reducer<CartState> = (state = initialState, action: any) => {
           ],
         };
       }
+
+    case REMOVE_FROM_CART:
+      const { username: removeUsername, productId: removeProductId } = action.payload;
+      const existingUserIndexRemove = state.cartItems.findIndex(
+        (item) => item.username === removeUsername
+      );
+
+      if (existingUserIndexRemove !== -1) {
+        const updatedUserProductsRemove = state.cartItems[existingUserIndexRemove].products.filter(
+          (item) => item.productId !== removeProductId
+        );
+
+        return {
+          ...state,
+          cartItems: [
+            ...state.cartItems.slice(0, existingUserIndexRemove),
+            {
+              username: removeUsername,
+              products: updatedUserProductsRemove,
+              cartItemCount: calculateCartItemCount(updatedUserProductsRemove),
+            },
+            ...state.cartItems.slice(existingUserIndexRemove + 1),
+          ],
+        };
+      }
+
+      return state;
 
     default:
       return state;

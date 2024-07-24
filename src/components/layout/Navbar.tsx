@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import {
   LOGOUT_SUCCESS,
   SAVE_TO_CART,
+  SAVE_TO_WISHLIST,
   UPDATE_CART_ITEM_COUNT,
   UPDATE_WISHLIST_ITEM_COUNT,
 } from "../../redux/interfaces/interfaces";
@@ -47,6 +48,7 @@ const Navbar: React.FC = () => {
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const [cartItemCount, setCartItemCount] = useState(0);
   const [wishlistItemCount, setWishlistItemCount] = useState(0);
+  const serverPort = process.env.REACT_APP_SERVER_PORT;
   const baseURL =
     userRole === "admin"
       ? process.env.REACT_APP_ADMIN_PORT
@@ -58,10 +60,26 @@ const Navbar: React.FC = () => {
       "Content-Type": "application/json",
     },
   });
+  const { data: wishlistData, makeRequest: wishlistRequest } = usePost(
+    `${baseURL}/get-wishlist`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
   const UserCartData =
     tempCart.find((item: any) => item.username === username) || 0;
   const UserWishlistData =
     tempWishlist.find((item: any) => item.username === username) || 0;
+
+useEffect(() => {
+if(searchQuery.length===0){
+  navigate("/")
+
+}
+}, [searchQuery])
 
   useEffect(() => {
     if (username && cartData) {
@@ -75,9 +93,22 @@ const Navbar: React.FC = () => {
         payload: sendData,
       });
 
-      // Calculate and update cartItemCount
     }
-  }, [username, cartData, dispatch, username]);
+  }, [username, cartData, dispatch]);
+  useEffect(() => {
+    if (username && wishlistData) {
+      const sendData = {
+        username: username,
+        products: wishlistData.products,
+      };
+
+      dispatch({
+        type: SAVE_TO_WISHLIST,
+        payload: sendData,
+      });
+
+    }
+  }, [username, cartData, dispatch]);
 
   useEffect(() => {
     const count = fetchCartLength(username, cart);
@@ -90,7 +121,7 @@ const Navbar: React.FC = () => {
         count: count,
       },
     });
-  }, []);
+  }, [username]);
   useEffect(() => {
     const count = fetchWishlistLength(username, wishlist);
     setWishlistItemCount(count);
@@ -102,7 +133,7 @@ const Navbar: React.FC = () => {
         count: count,
       },
     });
-  }, []);
+  }, [username]);
   useEffect(() => {
     setCartItemCount(UserCartData.cartItemCount);
   }, [UserCartData]);
@@ -125,9 +156,9 @@ const Navbar: React.FC = () => {
   };
 
   const goToCart = async () => {
+    if (cartItemCount <= 0) return;
     try {
       await makeRequest({ username: username });
-      console.log(data);
       if (data) {
         navigate("/cart");
       }
@@ -138,16 +169,17 @@ const Navbar: React.FC = () => {
 
   const handleSearchResults = (productId: string, category: string) => () => {
     if (productId && category) {
-      navigate(`/products/${category}/${productId}`);
+      navigate(`/${category}/${productId}`);
     }
     setIsLiOpen(true);
   };
 
   const goToWishlist = async () => {
+    if (wishlistItemCount <= 0) return;
     try {
-      await makeRequest({ username: username });
-      console.log(data);
-      if (data) {
+      await wishlistRequest({ username: username });
+      console.log(wishlistData);
+      if (wishlistData) {
         navigate("/wishlist");
       }
     } catch (error) {
@@ -156,29 +188,31 @@ const Navbar: React.FC = () => {
   };
 
   useEffect(() => {
-    if (debouncedSearchQuery) {
-      const fetchSearchResults = async () => {
-        try {
-          const response = await fetch(
-            `${baseURL}/name/${debouncedSearchQuery}`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-          const results: SearchResult[] = await response.json();
-          setSearchResults(results);
-        } catch (error) {
-          console.error("Error fetching search results:", error);
+    const fetchSearchResults = async () => {
+      try {
+        const response = await fetch(
+          `${serverPort}/name/${debouncedSearchQuery}`
+        );
+        const results: SearchResult[] = await response.json();
+        setSearchResults(results);
+  
+        if (debouncedSearchQuery.match(/laptops|accessories|tvs|phones/i)) {
+          navigate(`/${debouncedSearchQuery}`)
+          console.log("Matched category:", debouncedSearchQuery);
         }
-      };
 
+      } catch (error) {
+        console.error("Error fetching search results:", error);
+      }
+    };
+  
+    if (debouncedSearchQuery) {
       fetchSearchResults();
     } else {
       setSearchResults([]);
     }
   }, [debouncedSearchQuery, baseURL, token]);
+  
 
   return (
     <NavbarContainer isOpen={isOpen} toggleMenu={() => setIsOpen(!isOpen)}>

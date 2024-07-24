@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import Cookies from "js-cookie";
-import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
 import { Product } from "../../redux/interfaces/interfaces";
 import ProductCard from "../layout/ProductCard";
 
@@ -16,26 +14,14 @@ const CategorisedProduct: React.FC<ProductCategoryProps> = ({ category }) => {
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const loginDetails = useSelector((state: any) => state.loginForm);
-  const userRole = loginDetails.role;
-  const navigate = useNavigate();
+
   const containerRef = useRef<HTMLDivElement>(null);
   const token = Cookies.get("token");
-  const url =
-    userRole === "admin"
-      ? process.env.REACT_APP_ADMIN_PORT
-      : process.env.REACT_APP_USER_PORT;
-
+  const url = process.env.REACT_APP_SERVER_PORT;
 
   useEffect(() => {
     fetchProducts(page);
   }, [page]);
-  
-  useEffect(() => {
-    if (!userRole) {
-      navigate("/login");
-    }
-  }, [navigate, userRole]);
 
   const fetchProducts = async (page: number) => {
     setLoading(true);
@@ -87,12 +73,11 @@ const CategorisedProduct: React.FC<ProductCategoryProps> = ({ category }) => {
   }, [loading, hasMore]);
 
   return (
-    <div className="p-8 flex-grow" ref={containerRef}>
-      <h2 className="text-2xl font-bold mb-6">{category}</h2>
+    <div className="px-6 gap-6flex-grow">
       {loading && page === 1 && <div>Loading...</div>}
       {!loading && error && <div className="text-red-600">{error}</div>}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-screen-lg mx-auto">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 mx-auto">
         {products.map((product, index) => (
           <div className="grid-col-4" key={index}>
             <ProductCard
@@ -107,12 +92,16 @@ const CategorisedProduct: React.FC<ProductCategoryProps> = ({ category }) => {
           </div>
         ))}
       </div>
-      {loading && page > 1 && <div className="p-8">Loading more...</div>}
+      {loading && page === 1 && <div className="p-8">Loading more...</div>}
+      {!loading && error && <div className="p-8 text-red-600">{error}</div>}
+
       {!loading && !hasMore && (
         <p style={{ textAlign: "center", width: "100%" }}>
           <b>{"Yay! You have seen it all"}</b>
         </p>
       )}
+      {loading && hasMore && <h4>Loading more...</h4>}
+      <div ref={containerRef} style={{ height: "1px", visibility: "hidden" }} />
     </div>
   );
 };

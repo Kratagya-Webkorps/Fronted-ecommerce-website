@@ -2,9 +2,9 @@ import { WishlistState } from "../redux/interfaces/interfaces";
 
 export const fetchWishlistLength = (
   username: string,
-  cart: WishlistState
+  wishlist: WishlistState
 ): number => {
-  const userWishlist = cart.wishlistItems.find(
+  const userWishlist = wishlist.wishlistItems.find(
     (item) => item.username === username
   );
 

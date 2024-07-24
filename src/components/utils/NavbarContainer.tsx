@@ -10,9 +10,9 @@ type NavbarContainerProps = {
 const NavbarContainer: React.FC<NavbarContainerProps> = ({ children, isOpen, toggleMenu }) => {
   return (
     <nav className="bg-white fixed w-full z-20 top-0 left-0 border-b border-gray-200 dark:border-gray-600">
-      <div className="max-w-screen-xl container mx-auto px-4 py-2 flex items-center justify-between">
+      <div className="max-w-screen-xl container mx-auto px-4 py-2 flex justify-between">
         <span className="self-center text-2xl font-semibold whitespace-nowrap dark:text-dark">
-          Exclusive
+          TechStack
         </span>
         <div className="flex gap-4 items-center">
           {children}

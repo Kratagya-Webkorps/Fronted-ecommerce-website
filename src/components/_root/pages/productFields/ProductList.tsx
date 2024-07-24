@@ -58,7 +58,7 @@ const ProductList: React.FC = () => {
 
   return (
     <div className="flex-grow px-6 gap-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 pt-6">
         <h2 className="text-2xl font-bold">Explore our products</h2>
       </div>
 

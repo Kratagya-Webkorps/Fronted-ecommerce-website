@@ -4,6 +4,7 @@ import {
   SAVE_TO_WISHLIST,
   WishlistState,
   UPDATE_WISHLIST_ITEM_COUNT,
+  DELETE_FROM_WISHLIST,
 } from "../interfaces/interfaces";
 
 const initialState: WishlistState = {
@@ -73,7 +74,6 @@ const wishlistReducer: Reducer<WishlistState> = (state = initialState, action: a
       );
 
       if (existingUserIndexAdd !== -1) {
-        // User already exists in wishlistItems, update products array
         const updatedUserProductsAdd = [
           ...state.wishlistItems[existingUserIndexAdd].products,
         ];
@@ -82,7 +82,6 @@ const wishlistReducer: Reducer<WishlistState> = (state = initialState, action: a
         );
 
         if (existingProductIndexAdd === -1) {
-          // Product doesn't exist, add it
           updatedUserProductsAdd.push({ productId });
         }
 
@@ -111,7 +110,32 @@ const wishlistReducer: Reducer<WishlistState> = (state = initialState, action: a
           ],
         };
       }
-
+      case DELETE_FROM_WISHLIST:
+        const { username: deleteUsername, productId: deleteProductId } = action.payload;
+        const existingUserIndexDelete = state.wishlistItems.findIndex(
+          (item) => item.username === deleteUsername
+        );
+  
+        if (existingUserIndexDelete !== -1) {
+          const updatedUserProductsDelete = state.wishlistItems[existingUserIndexDelete].products.filter(
+            (item) => item.productId !== deleteProductId
+          );
+  
+          return {
+            ...state,
+            wishlistItems: [
+              ...state.wishlistItems.slice(0, existingUserIndexDelete),
+              {
+                ...state.wishlistItems[existingUserIndexDelete],
+                products: updatedUserProductsDelete,
+                wishlistItemCount: calculateCartItemCount(updatedUserProductsDelete),
+              },
+              ...state.wishlistItems.slice(existingUserIndexDelete + 1),
+            ],
+          };
+        }
+  
+        return state;
     default:
       return state;
   }

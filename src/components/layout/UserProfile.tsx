@@ -36,8 +36,9 @@ const UserProfile = () => {
                 {role}
               </dd>
             </div>
-            <div className="flex justify-end px-6 py-4">
-              <Link to={"/:username/editProfile"}><Button type="submit">Edit Profile</Button></Link>
+            <div className="flex justify-end px-6 gap-4 py-4">
+              <Link to={`/${username}/editProfile`}><Button  type="submit">Edit Profile</Button></Link>
+              <Link to={`/${username}/orders`}><Button  type="button">Orders</Button></Link>
             </div>
           </dl>
         </div>

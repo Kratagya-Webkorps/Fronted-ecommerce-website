@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   ADD_TO_WISHLIST,
+  DELETE_FROM_WISHLIST,
   ProductCardProps,
 } from "../../redux/interfaces/interfaces";
 import { FiStar } from "react-icons/fi";
@@ -18,7 +19,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   price,
   id,
   rating,
-  className = "",
+  className = ""
 }) => {
   const [isInWishlist, setisInWishlist] = useState(false);
   const navigate = useNavigate();
@@ -31,8 +32,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
     userRole === "admin"
       ? process.env.REACT_APP_ADMIN_PORT
       : process.env.REACT_APP_USER_PORT;
-  const { data: initialdata, makeRequest: sendRequest } = usePost(
-    `${baseURL}/add-to-wishlist`,
+  const { makeRequest: sendRequest } = usePost(`${baseURL}/add-to-wishlist`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+  const { makeRequest: removeFromWishlistRequest } = usePost(
+    `${baseURL}/delete-from-wishlist`,
     {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -44,7 +51,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const { data, isLoading, makeRequest } = useProductFetch({ productId: id });
   useEffect(() => {
     if (data) {
-      navigate(`/products/${data.category}/${data._id}`, {
+      console.log(data.category);
+      if (data.category === "accessories") {
+        navigate(`/accessories/${data._id}`, {
+          state: { productData: data },
+        });
+        return;
+      }
+      navigate(`/${data.category}s/${data._id}`, {
         state: { productData: data },
       });
     }
@@ -61,21 +75,33 @@ const ProductCard: React.FC<ProductCardProps> = ({
       />
     ));
 
-  const handleWishlist = async () => {
+  const handleWishlist = async (event: any) => {
+    event.stopPropagation();
+    if (!username) return;
     if (isInWishlist === false) {
       const sendData = {
         username: username,
         productId: id,
       };
 
-      console.log(sendData);
       try {
         await sendRequest(sendData);
         dispatch({
           type: ADD_TO_WISHLIST,
           payload: sendData,
         });
-        console.log({ initialdata });
+        console.log("Product added to wishlist successfully");
+      } catch (err) {
+        console.error("Error saving in wishlist:", err);
+      }
+    }
+    if (isInWishlist) {
+      try {
+        await removeFromWishlistRequest({ username: username, productId: id });
+        dispatch({
+          type: DELETE_FROM_WISHLIST,
+          payload: { username: username, productId: id },
+        });
         console.log("Product added to wishlist successfully");
       } catch (err) {
         console.error("Error saving in wishlist:", err);
@@ -114,24 +140,27 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
   return (
     <div className={`border p-4 rounded-lg shadow-md w-54 h-70 ${className} `}>
-      <img
-        src={image}
-        alt="Product"
-        className="w-full h-40 object-cover mb-4 cursor-pointer"
-        onClick={handleProductClick}
-      />
-      <div className="flex flex-col justify-between h-full">
-        <div>
-          <div className="mb-2 h-24">
-            <span className="text-lg font-semibold">{newName}</span>
+      <div onClick={handleProductClick} className=" cursor-pointer">
+        <img
+          src={image}
+          alt="Product"
+          className="w-full h-40 mb-4 cursor-pointer object-contain bg-contain"
+          onClick={handleProductClick}
+        />
+        <div className="flex flex-col justify-between h-full">
+          <div>
+            <div className="mb-2 h-24">
+              <span className="text-lg font-semibold">{newName}</span>
+            </div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-lg font-semibold flex">
+                <HiOutlineCurrencyRupee className="w-6 h-6" />
+                {price}
+              </span>
+              <div className="flex">{stars}</div>
+            </div>
           </div>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-lg font-semibold flex">
-              <HiOutlineCurrencyRupee className="w-6 h-6" />
-              {price}
-            </span>
-            <div className="flex">{stars}</div>
-          </div>
+
           <div className="flex">
             {isInWishlist ? (
               <FaHeart
